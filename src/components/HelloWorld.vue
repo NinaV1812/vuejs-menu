@@ -6,12 +6,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Plus } from "lucide-vue-next";
+import { ChevronDown } from "lucide-vue-next";
+import PopoverDialog from "@/components/PopoverDialog.vue";
 
 export default {
   components: {
     ChevronDown,
-    Plus,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+    PopoverDialog,
   },
   data() {
     return {
@@ -37,7 +42,6 @@ export default {
     },
     addItem() {
       console.log("Add item function triggered");
-      // Logic for adding a new item goes here
     },
     showLabel(index) {
       this.hoveredIndex = index;
@@ -52,18 +56,16 @@ export default {
 <template>
   <Sidebar class="sidebar">
     <SidebarMenu>
-      <SidebarMenuItem
-        v-for="(item, index) in menuItems"
-        :key="index"
-        @mouseleave="hideLabel"
-      >
+      <SidebarMenuItem v-for="(item, index) in menuItems" :key="index" @mouseleave="hideLabel">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton class="sidebar-button" @click="toggleDropdown(index)">
               {{ item.title }}
               <!-- <div class="icon-container" @mouseenter="showLabel(index)" @mouseleave="hideLabel"> -->
-                <Plus class="add-button" />
-                <!-- <HoverLabel :text="'Add new item'" :show="hoveredIndex === index" /> -->
+              <PopoverDialog />
+              <!-- Use your new popover component -->
+              <!-- <Plus class="add-button" @click="addItem()"/> -->
+              <!-- <HoverLabel :text="'Add new item'" :show="hoveredIndex === index" /> -->
               <!-- </div> -->
               <ChevronDown :class="['chevron-icon', { 'rotate-180': expandedItems[index] }]" />
             </SidebarMenuButton>
@@ -78,7 +80,6 @@ export default {
     </SidebarMenu>
   </Sidebar>
 </template>
-
 
 <style scoped>
 .sidebar {
