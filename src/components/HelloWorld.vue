@@ -1,44 +1,32 @@
 <script>
 import { Sidebar, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-vue-next";
 import PopoverDialog from "@/components/PopoverDialog.vue";
 
 export default {
   components: {
     ChevronDown,
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
     PopoverDialog,
   },
   data() {
     return {
       menuItems: [
-        { title: "Inbox", options: ["Acme Inc", "Acme Corp."] },
-        { title: "Personal", options: ["Project Alpha", "Project Beta"] },
-        { title: "Teams", options: ["Project Alpha", "Project Beta"] },
-        { title: "Channels", options: ["Project Alpha", "Project Beta"] },
-        { title: "Views", options: ["Project Alpha", "Project Beta"] },
-        { title: "Labels", options: ["Project Alpha", "Project Beta"] },
-        { title: "Users", options: ["Project Alpha", "Project Beta"] },
+        { title: "Inbox", options: ["Acme Inc", "Acme Corp."], isEditable: false },
+        { title: "Personal", options: ["Project Alpha", "Project Beta"], isEditable: false },
+        { title: "Teams", options: ["Project Alpha", "Project Beta"], isEditable: false },
+        { title: "Channels", options: ["Project Alpha", "Project Beta"], isEditable: true },
+        { title: "Views", options: ["Project Alpha", "Project Beta"], isEditable: false },
+        { title: "Labels", options: ["Project Alpha", "Project Beta"], isEditable: false },
+        { title: "Users", options: ["Project Alpha", "Project Beta"], isEditable: false },
       ],
-      expandedItems: [],
+      expandedIndex: null, // Track the index of the currently expanded item
       hoveredIndex: null,
     };
   },
-  created() {
-    this.expandedItems = this.menuItems.map(() => false);
-  },
   methods: {
     toggleDropdown(index) {
-      this.expandedItems[index] = !this.expandedItems[index];
+      // Toggle expanded item
+      this.expandedIndex = this.expandedIndex === index ? null : index;
     },
     addItem() {
       console.log("Add item function triggered");
@@ -50,6 +38,16 @@ export default {
       this.hoveredIndex = null;
     },
   },
+  wrapperHandleApply(index, newOption) {
+    console.log("Calling handleApply via wrapper");
+    this.handleApply(index, newOption);
+  },
+  handleApply(index, newOption) {
+    console.log("Parent handleApply called with index:", index, "and newOption:", newOption);
+    const menuItem = this.menuItems[index];
+    menuItem.options.push(newOption);
+    console.log("Updated menuItems:", this.menuItems);
+  },
 };
 </script>
 
@@ -57,25 +55,25 @@ export default {
   <Sidebar class="sidebar">
     <SidebarMenu>
       <SidebarMenuItem v-for="(item, index) in menuItems" :key="index" @mouseleave="hideLabel">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton class="sidebar-button" @click="toggleDropdown(index)">
-              {{ item.title }}
-              <!-- <div class="icon-container" @mouseenter="showLabel(index)" @mouseleave="hideLabel"> -->
-              <PopoverDialog />
-              <!-- Use your new popover component -->
-              <!-- <Plus class="add-button" @click="addItem()"/> -->
-              <!-- <HoverLabel :text="'Add new item'" :show="hoveredIndex === index" /> -->
-              <!-- </div> -->
-              <ChevronDown :class="['chevron-icon', { 'rotate-180': expandedItems[index] }]" />
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent v-if="expandedItems[index]" class="dropdown-content w-full">
-            <DropdownMenuItem v-for="(option, optIndex) in item.options" :key="optIndex" class="dropdown-item">
-              <span>{{ option }}</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <SidebarMenuButton class="sidebar-button" @click="toggleDropdown(index)">
+          {{ item.title }}
+          <PopoverDialog
+            v-if="item.isEditable"
+            :options="item.options"
+            :index="index"
+            :handleApply="handleApply"
+          />
+          <ChevronDown :class="['chevron-icon', { 'rotate-180': expandedIndex === index }]" />
+        </SidebarMenuButton>
+
+        <div
+          v-show="expandedIndex === index"
+          :class="['collapsible', expandedIndex === index ? 'animate-collapsible-down' : 'animate-collapsible-up']"
+        >
+          <div v-for="(option, optIndex) in item.options" :key="optIndex" class="dropdown-item">
+            <span>{{ option }}</span>
+          </div>
+        </div>
       </SidebarMenuItem>
     </SidebarMenu>
   </Sidebar>
@@ -96,14 +94,7 @@ export default {
   display: flex;
   align-items: center;
   padding: 12px 16px;
-}
-
-.add-button {
-  color: #007bff;
-  cursor: pointer;
-  margin-left: 8px;
-  transition: color 0.3s ease;
-  cursor: pointer;
+  font-weight: bold;
 }
 
 .add-button:hover {
@@ -123,12 +114,8 @@ export default {
   transform: rotate(180deg);
 }
 
-.dropdown-content {
-  background-color: #ffffff;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  margin-top: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+.collapsible {
+  overflow: hidden;
 }
 
 .dropdown-item {
