@@ -1,52 +1,39 @@
 <script>
-import { Sidebar, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
+import { computed } from "vue";
 import { ChevronDown } from "lucide-vue-next";
 import PopoverDialog from "@/components/PopoverDialog.vue";
+import { useChannelsStore } from "@/stores/counter";
 
 export default {
   components: {
     ChevronDown,
     PopoverDialog,
   },
-  data() {
-    return {
-      menuItems: [
-        { title: "Inbox", options: ["Acme Inc", "Acme Corp."], isEditable: false },
-        { title: "Personal", options: ["Project Alpha", "Project Beta"], isEditable: false },
-        { title: "Teams", options: ["Project Alpha", "Project Beta"], isEditable: false },
-        { title: "Channels", options: ["Project Alpha", "Project Beta"], isEditable: true },
-        { title: "Views", options: ["Project Alpha", "Project Beta"], isEditable: false },
-        { title: "Labels", options: ["Project Alpha", "Project Beta"], isEditable: false },
-        { title: "Users", options: ["Project Alpha", "Project Beta"], isEditable: false },
-      ],
-      expandedIndex: null, // Track the index of the currently expanded item
-      hoveredIndex: null,
+  setup() {
+    const channelsStore = useChannelsStore();
+
+    const menuItems = computed(() => channelsStore.menuItems);
+
+    const addItem=(newOption) => {
+      channelsStore.addOptionToChannels(newOption);
+      console.log("Add item function triggered with new option:", newOption);
     };
-  },
-  methods: {
-    toggleDropdown(index) {
-      // Toggle expanded item
-      this.expandedIndex = this.expandedIndex === index ? null : index;
-    },
-    addItem() {
-      console.log("Add item function triggered");
-    },
-    showLabel(index) {
-      this.hoveredIndex = index;
-    },
-    hideLabel() {
-      this.hoveredIndex = null;
-    },
-  },
-  wrapperHandleApply(index, newOption) {
-    console.log("Calling handleApply via wrapper");
-    this.handleApply(index, newOption);
-  },
-  handleApply(index, newOption) {
-    console.log("Parent handleApply called with index:", index, "and newOption:", newOption);
-    const menuItem = this.menuItems[index];
-    menuItem.options.push(newOption);
-    console.log("Updated menuItems:", this.menuItems);
+
+    return {
+      menuItems,
+      expandedIndex: null, 
+      hoveredIndex: null,
+      toggleDropdown(index) {
+        this.expandedIndex = this.expandedIndex === index ? null : index;
+      },
+      addItem,
+      showLabel(index) {
+        this.hoveredIndex = index;
+      },
+      hideLabel() {
+        this.hoveredIndex = null;
+      },
+    };
   },
 };
 </script>
@@ -54,15 +41,11 @@ export default {
 <template>
   <Sidebar class="sidebar">
     <SidebarMenu>
+      <!-- <SidebarMenuItem v-for="(item, index) in menuItems()" :key="index" @mouseleave="hideLabel"> -->
       <SidebarMenuItem v-for="(item, index) in menuItems" :key="index" @mouseleave="hideLabel">
         <SidebarMenuButton class="sidebar-button" @click="toggleDropdown(index)">
           {{ item.title }}
-          <PopoverDialog
-            v-if="item.isEditable"
-            :options="item.options"
-            :index="index"
-            :handleApply="handleApply"
-          />
+          <PopoverDialog v-if="item.isEditable" :options="item.options" :index="index" v-bind:handleApply="addItem" />
           <ChevronDown :class="['chevron-icon', { 'rotate-180': expandedIndex === index }]" />
         </SidebarMenuButton>
 

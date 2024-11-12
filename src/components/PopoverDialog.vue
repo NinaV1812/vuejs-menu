@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Plus, PhoneCall, Trash2 } from "lucide-vue-next";
 import { Separator } from "@/components/ui/separator";
+import { useChannelsStore } from "@/stores/counter";
+
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default defineComponent({
@@ -19,8 +21,11 @@ export default defineComponent({
     Plus,
     PhoneCall,
     Trash2,
-    Popover, PopoverContent, PopoverTrigger,
-  },
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+    },
+
   props: {
     handleApply: {
       type: Function as PropType<(index: number, newOption: string) => void>,
@@ -28,18 +33,17 @@ export default defineComponent({
     },
     options: {
       type: Array,
-      default: () => [], // Default empty array if not passed
+      default: () => [],
     },
     index: {
       type: Number,
       required: true,
     },
   },
-  setup(props) {
-    const newOption = ref(""); // Reactive variable for the input value
+  setup() {
+    const newOption = ref("");
     const isInputFocused = ref(false);
 
-    // Handle focus and blur events
     const onFocus = () => {
       isInputFocused.value = true;
     };
@@ -47,26 +51,14 @@ export default defineComponent({
     const onBlur = () => {
       isInputFocused.value = false;
     };
-
-    // The onApply method should now be in setup and use props.handleApply
-    const onApply = () => {
-    //     console.log('AAAAA', newOption.value)
-    //     console.log('BBBBB',props.index )
-    //     console.log('handleApply',props.handleApply )
-    //   if (props.handleApply) {
-    //     console.log('CCCCCc',props.index )
-
-    //     props.handleApply(props.index, newOption.value);
-    //   }
-    [...props.options, newOption.value];
-    };
+    const { addOptionToChannels } = useChannelsStore();
 
     return {
       newOption,
       isInputFocused,
       onFocus,
       onBlur,
-      onApply,
+      addOptionToChannels,
     };
   },
 });
@@ -81,7 +73,7 @@ export default defineComponent({
             <Plus class="add-button" />
           </TooltipTrigger>
           <TooltipContent bg="black">
-            <p style="color: white">Add channels</p>
+            <span>Add channels</span>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -118,7 +110,7 @@ export default defineComponent({
 
       <div class="w-full flex justify-end gap-3 mt-3">
         <Button variant="outline">Cancel</Button>
-        <Button @click="onApply">Apply</Button>
+        <Button @click="addOptionToChannels">Apply</Button>
       </div>
     </PopoverContent>
   </Popover>
@@ -143,22 +135,22 @@ export default defineComponent({
   width: 100%;
   font-size: 14px;
   border-radius: 4px;
-  background-color: #f3f4f6; /* Light gray background */
-  border: 1px solid #d1d5db; /* Gray border */
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
   transition: all 0.3s ease;
 }
 
 .input-style:focus {
-  background-color: #e5e7eb; /* Light blue on focus */
-  border-color: #3b82f6; /* Blue border on focus */
+  background-color: #e5e7eb;
+  border-color: #3b82f6;
   outline: none;
 }
 
 .input-style::placeholder {
-  color: #9ca3af; /* Placeholder color */
+  color: #9ca3af;
 }
 
 .input-style:focus::placeholder {
-  color: #6b7280; /* Darker placeholder color when focused */
+  color: #6b7280;
 }
 </style>
