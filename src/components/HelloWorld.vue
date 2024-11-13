@@ -1,8 +1,9 @@
 <script>
-import { computed } from "vue";
 import { ChevronDown } from "lucide-vue-next";
 import PopoverDialog from "@/components/PopoverDialog.vue";
 import { useChannelsStore } from "@/stores/counter";
+import { ref } from "vue";
+
 
 export default {
   components: {
@@ -10,29 +11,30 @@ export default {
     PopoverDialog,
   },
   setup() {
-    const channelsStore = useChannelsStore();
+    const { menuItems } = useChannelsStore();
+    const expandedIndex = ref(null);
+    const hoveredIndex = ref(null);
 
-    const menuItems = computed(() => channelsStore.menuItems);
-
-    const addItem=(newOption) => {
-      channelsStore.addOptionToChannels(newOption);
-      console.log("Add item function triggered with new option:", newOption);
+  
+    console.log("menuItems", menuItems);
+    const toggleDropdown = (index) => {
+      expandedIndex.value = expandedIndex.value === index ? null : index;
     };
 
+    const showLabel = (index) => {
+      hoveredIndex.value = index;
+    };
+
+    const hideLabel = () => {
+      hoveredIndex.value = null;
+    };
     return {
       menuItems,
-      expandedIndex: null, 
-      hoveredIndex: null,
-      toggleDropdown(index) {
-        this.expandedIndex = this.expandedIndex === index ? null : index;
-      },
-      addItem,
-      showLabel(index) {
-        this.hoveredIndex = index;
-      },
-      hideLabel() {
-        this.hoveredIndex = null;
-      },
+      expandedIndex,
+      hoveredIndex,
+      toggleDropdown,
+      showLabel,
+      hideLabel,
     };
   },
 };
@@ -41,11 +43,10 @@ export default {
 <template>
   <Sidebar class="sidebar">
     <SidebarMenu>
-      <!-- <SidebarMenuItem v-for="(item, index) in menuItems()" :key="index" @mouseleave="hideLabel"> -->
-      <SidebarMenuItem v-for="(item, index) in menuItems" :key="index" @mouseleave="hideLabel">
+      <SidebarMenuItem v-for="(item, index) in menuItems" :key="index" @mouseleave="hideLabel" @mouseout="showLabel">
         <SidebarMenuButton class="sidebar-button" @click="toggleDropdown(index)">
           {{ item.title }}
-          <PopoverDialog v-if="item.isEditable" :options="item.options" :index="index" v-bind:handleApply="addItem" />
+          <PopoverDialog v-if="item.isEditable" :options="item.options" :index="index" />
           <ChevronDown :class="['chevron-icon', { 'rotate-180': expandedIndex === index }]" />
         </SidebarMenuButton>
 
@@ -78,6 +79,7 @@ export default {
   align-items: center;
   padding: 12px 16px;
   font-weight: bold;
+  cursor: pointer;
 }
 
 .add-button:hover {
@@ -90,7 +92,6 @@ export default {
   margin-left: auto;
   color: #6c757d;
   transition: transform 0.3s ease;
-  cursor: pointer;
 }
 
 .rotate-180 {
