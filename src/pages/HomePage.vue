@@ -1,22 +1,21 @@
-<script >
+<script>
 import { ChevronDown } from "lucide-vue-next";
 import PopoverDialog from "@/components/PopoverDialog.vue";
 import { useChannelsStore } from "@/stores/counter";
 import { ref } from "vue";
-
+import IconComponent from "@/components/IconComponent.vue";
 
 export default {
   components: {
     ChevronDown,
     PopoverDialog,
+    IconComponent,
   },
   setup() {
     const { menuItems } = useChannelsStore();
     const expandedIndex = ref(null);
     const hoveredIndex = ref(null);
 
-  
-    console.log("menuItems", menuItems);
     const toggleDropdown = (index) => {
       expandedIndex.value = expandedIndex.value === index ? null : index;
     };
@@ -43,19 +42,32 @@ export default {
 <template>
   <Sidebar class="sidebar">
     <SidebarMenu>
-      <SidebarMenuItem v-for="(item, index) in menuItems" :key="index" @mouseleave="hideLabel" @mouseout="showLabel">
+      <SidebarMenuItem
+        v-for="(item, index) in menuItems"
+        :key="index"
+        @mouseleave="hideLabel"
+        @mouseout="showLabel"
+      >
         <SidebarMenuButton class="sidebar-button" @click="toggleDropdown(index)">
           {{ item.title }}
           <PopoverDialog v-if="item.isEditable" :options="item.options" :index="index" />
-          <ChevronDown :class="['chevron-icon', { 'rotate-180': expandedIndex === index }]" />
+          <ChevronDown
+            :class="[
+              'chevron-icon',
+              {
+                'rotate-180': expandedIndex === index && !!item.options.length,
+                'chevron-disabled': !item.options.length,
+              },
+            ]"
+          />
         </SidebarMenuButton>
-
         <div
           v-show="expandedIndex === index"
           :class="['collapsible', expandedIndex === index ? 'animate-collapsible-down' : 'animate-collapsible-up']"
         >
           <div v-for="(option, optIndex) in item.options" :key="optIndex" class="dropdown-item">
-            <span>{{ option }}</span>
+            <IconComponent :type="option.type" />
+            <span>{{ option.title }}</span>
           </div>
         </div>
       </SidebarMenuItem>
@@ -97,12 +109,18 @@ export default {
 .rotate-180 {
   transform: rotate(180deg);
 }
+.chevron-disabled {
+  color: #b0b0b0;
+}
 
 .collapsible {
   overflow: hidden;
 }
 
 .dropdown-item {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
   padding: 8px 16px;
   cursor: pointer;
   transition: background-color 0.2s;

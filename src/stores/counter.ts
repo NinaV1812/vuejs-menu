@@ -1,41 +1,49 @@
-import { ref, computed, reactive } from "vue";
+import { reactive, computed } from "vue";
 import { defineStore } from "pinia";
 
+export enum ChannelTypes {
+  Phone = "phone",
+  Email = "email",
+  WhatsApp = "WhatsApp",
+}
 
+export type ChannelOption = {
+  title: string;
+  type: ChannelTypes;
+};
+
+const dummyChannelsOptions: ChannelOption[] = [
+  { title: "Project Alpha", type: ChannelTypes.Email },
+  { title: "Project Beta", type: ChannelTypes.Phone },
+  { title: "Project Gamma", type: ChannelTypes.WhatsApp },
+];
+
+export const sideMenuItems = [
+  { title: "Inbox", options: [] },
+  { title: "Personal", options: [] },
+  { title: "Teams", options: [] },
+  { title: "Channels", options: dummyChannelsOptions, isEditable: true },
+  { title: "Views", options: [] },
+  { title: "Labels", options: [] },
+  { title: "Users", options: [] },
+];
 
 export const useChannelsStore = defineStore("channels", () => {
-  const menuItems = reactive([
-    { title: "Inbox", options: ["Acme Inc", "Acme Corp."], isEditable: false },
-    { title: "Personal", options: ["Project Alpha", "Project Beta"], isEditable: false },
-    { title: "Teams", options: ["Project Alpha", "Project Beta"], isEditable: false },
-    { title: "Channels", options: ["Project Alpha", "Project Beta"], isEditable: true },
-    { title: "Views", options: ["Project Alpha", "Project Beta"], isEditable: false },
-    { title: "Labels", options: ["Project Alpha", "Project Beta"], isEditable: false },
-    { title: "Users", options: ["Project Alpha", "Project Beta"], isEditable: false },
-  ]);
-  console.log("menuItems in useChannelsStore", menuItems);
+  const menuItems = reactive(sideMenuItems);
+  const channelsItem = computed(() => menuItems.find((item) => item.title === "Channels"));
 
-  function addOptionToChannels(newOption: string) {
-    console.log("newOption in addOptionToChannels", newOption);
-    const channelsItem = menuItems.find((item) => item.title === "Channels");
-    if (channelsItem && channelsItem.isEditable) {
-      channelsItem.options = [...channelsItem.options, newOption]
+  const addOptionToChannels = (newOption: ChannelOption) => {
+    if (channelsItem.value?.options) {
+      channelsItem.value.options = [...channelsItem.value.options, newOption];
     }
-    console.log("channelsItem in addOptionToChannels", channelsItem);
   }
 
-  function removeOptionToChannels(index: number) {
-    console.log("index in removeOptionToChannels", index);
-  
-    // Find the "Channels" menu item
-    const channelsItem = menuItems.find((item) => item.title === "Channels");
-  
-    if (channelsItem) {
-      channelsItem.options = [...channelsItem.options.filter((_, i) => i !== index)];
+  const removeOptionToChannels= (index: number) => {
+    if (channelsItem.value?.options) {
+      channelsItem.value.options = channelsItem.value.options.filter((_, i) => i !== index);
     }
-  
-    console.log("channelsItem after removal in removeOptionToChannels", channelsItem);
   }
 
-  return { menuItems, addOptionToChannels, removeOptionToChannels };
+
+  return { menuItems, addOptionToChannels, removeOptionToChannels, channelsItem };
 });

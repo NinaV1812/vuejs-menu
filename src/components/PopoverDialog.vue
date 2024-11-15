@@ -1,11 +1,12 @@
 <script lang="ts">
 import { defineComponent, ref } from "vue";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, PhoneCall, Trash2 } from "lucide-vue-next";
+import { Plus, Trash2 } from "lucide-vue-next";
 import { Separator } from "@/components/ui/separator";
-import { useChannelsStore } from "@/stores/counter";
+import { useChannelsStore, ChannelTypes, type ChannelOption } from "@/stores/counter";
 import { useForm, Field } from "vee-validate";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import IconComponent from "@/components/IconComponent.vue";
 
 export default defineComponent({
   components: {
@@ -15,16 +16,16 @@ export default defineComponent({
     TooltipTrigger,
     Separator,
     Plus,
-    PhoneCall,
     Trash2,
     Popover,
     PopoverContent,
     PopoverTrigger,
     Field,
+    IconComponent,
   },
   props: {
     options: {
-      type: Array,
+      type: Array as () => ChannelOption[], // Type it as an array of ChannelOption
       default: () => [],
     },
     index: {
@@ -36,17 +37,23 @@ export default defineComponent({
     const isInputFocused = ref(false);
     const popoverVisible = ref(false);
     const { addOptionToChannels, removeOptionToChannels } = useChannelsStore();
-    
+
     const { handleSubmit, resetForm, values } = useForm({
       initialValues: {
-        newOption: ""
-      }
+        newOption: "",
+      },
     });
 
     const onSubmit = handleSubmit((values) => {
-      addOptionToChannels(values.newOption);
-      resetForm(); 
-      popoverVisible.value = false; 
+      // Ensure defaults are set before adding the option
+      const newOption = {
+        title: values.newOption, // Set the title to the value of newOption
+        type: ChannelTypes.Phone, // Default type is 'phone'
+      };
+
+      addOptionToChannels(newOption); // Pass the new option to the function
+      resetForm(); // Reset the form after submission
+      popoverVisible.value = false; // Close the popover
     });
 
     const onCancel = () => {
@@ -61,7 +68,7 @@ export default defineComponent({
       popoverVisible,
       onSubmit,
       onCancel,
-      values, 
+      values,
       removeOptionToChannels,
     };
   },
@@ -73,9 +80,9 @@ export default defineComponent({
     <PopoverTrigger>
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger @click="popoverVisible = true" >
-            <Button @click="popoverVisible = true" >
-            <Plus class="add-button"  />
+          <TooltipTrigger @click="popoverVisible = true">
+            <Button @click="popoverVisible = true">
+              <Plus class="add-button" />
             </Button>
           </TooltipTrigger>
           <TooltipContent bg="black">
@@ -109,12 +116,11 @@ export default defineComponent({
 
         <div v-for="(option, index) in options" :key="index" class="text-sm text-gray-700">
           <div class="w-full flex items-center justify-between mt-3 mb-3">
-            <PhoneCall class="text-muted-foreground" />
-            <Label for="email" class="flex-1 ml-3 mr-3">{{ option }}</Label>
+            <IconComponent :type="option.type" />
+            <Label for="email" class="flex-1 ml-3 mr-3">{{ option.title }}</Label>
             <Button @click="removeOptionToChannels(index)">
-            <!-- <Trash2 class="text-muted-foreground" @click="removeOptionToChannels(index)"/> -->
-            <Trash2 class="text-muted-foreground" />
-          </Button>
+              <Trash2 class="text-muted-foreground" />
+            </Button>
           </div>
         </div>
 
