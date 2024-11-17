@@ -1,12 +1,13 @@
 <script lang="ts">
-import { defineComponent, ref } from "vue";
+import { defineComponent, ref, watch } from "vue";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Trash2 } from "lucide-vue-next";
+import { Plus, Trash2, GripVertical } from "lucide-vue-next";
 import { Separator } from "@/components/ui/separator";
 import { useChannelsStore, ChannelTypes, type ChannelOption } from "@/stores/counter";
 import { useForm, Field } from "vee-validate";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import IconComponent from "@/components/IconComponent.vue";
+import { VueDraggableNext } from 'vue-draggable-next'
 
 export default defineComponent({
   components: {
@@ -22,10 +23,12 @@ export default defineComponent({
     PopoverTrigger,
     Field,
     IconComponent,
+    // draggable,
+    GripVertical,
   },
   props: {
     options: {
-      type: Array as () => ChannelOption[], // Type it as an array of ChannelOption
+      type: Array as () => ChannelOption[],
       default: () => [],
     },
     index: {
@@ -33,9 +36,13 @@ export default defineComponent({
       required: true,
     },
   },
-  setup() {
+  setup(props) {
     const isInputFocused = ref(false);
     const popoverVisible = ref(false);
+    const dragEnabled = ref(false); // Add this reactive flag for drag enable state
+    const drag = ref(false);
+    const localOptions = ref<ChannelOption[]>([...props.options]);
+
     const { addOptionToChannels, removeOptionToChannels } = useChannelsStore();
 
     const { handleSubmit, resetForm, values } = useForm({
@@ -45,7 +52,6 @@ export default defineComponent({
     });
 
     const onSubmit = handleSubmit((values) => {
-      // Ensure defaults are set before adding the option
       const newOption = {
         title: values.newOption, // Set the title to the value of newOption
         type: ChannelTypes.Phone, // Default type is 'phone'
@@ -61,6 +67,23 @@ export default defineComponent({
       popoverVisible.value = false; // Hide the popover
     };
 
+    // Watch for changes to the localOptions and emit changes back to the parent
+    watch(localOptions, (newOptions) => {
+      console.log("Updated options:", newOptions);
+    });
+
+    // Enable drag functionality
+    const enableDrag = () => {
+      dragEnabled.value = true;
+    };
+
+    // Check if move is allowed (could be extended with custom logic)
+    const checkMove = (e) => {
+      // Log the index and decide if move should happen
+      console.log("Future index: " + e.draggedContext.futureIndex);
+      return true; // Allow all moves (could add conditions)
+    };
+
     return {
       isInputFocused,
       onFocus: () => (isInputFocused.value = true),
@@ -70,18 +93,23 @@ export default defineComponent({
       onCancel,
       values,
       removeOptionToChannels,
+      dragEnabled, // Return the drag state
+      enableDrag, // Return the function to enable drag
+      localOptions,
+      drag,
+      checkMove,
     };
   },
 });
 </script>
 
 <template>
-  <Popover v-model="popoverVisible">
+  <Popover>
     <PopoverTrigger>
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger @click="popoverVisible = true">
-            <Button @click="popoverVisible = true">
+          <TooltipTrigger >
+            <Button >
               <Plus class="add-button" />
             </Button>
           </TooltipTrigger>
@@ -92,7 +120,7 @@ export default defineComponent({
       </TooltipProvider>
     </PopoverTrigger>
 
-    <PopoverContent class="ml-40">
+    <PopoverContent class="popover-content ml-40">
       <form class="w-2/3 space-y-6" @submit.prevent="onSubmit">
         <div class="w-full flex items-center relative">
           <Field name="newOption" v-slot="{ field }">
@@ -116,6 +144,9 @@ export default defineComponent({
 
         <div v-for="(option, index) in options" :key="index" class="text-sm text-gray-700">
           <div class="w-full flex items-center justify-between mt-3 mb-3">
+            <Button @click="removeOptionToChannels(index)">
+              <GripVertical class="text-muted-foreground" />
+            </Button>
             <IconComponent :type="option.type" />
             <Label for="email" class="flex-1 ml-3 mr-3">{{ option.title }}</Label>
             <Button @click="removeOptionToChannels(index)">
@@ -166,5 +197,12 @@ export default defineComponent({
 
 .input-style:focus::placeholder {
   color: #6b7280;
+}
+
+.popover-content {
+  z-index: 1050;
+}
+.list-group {
+  overflow: visible !important;
 }
 </style>

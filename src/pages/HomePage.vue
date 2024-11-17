@@ -1,20 +1,26 @@
 <script>
 import { ChevronDown } from "lucide-vue-next";
-import PopoverDialog from "@/components/PopoverDialog.vue";
+// import PopoverDialog from "@/components/PopoverDialog.vue";
 import { useChannelsStore } from "@/stores/counter";
 import { ref } from "vue";
 import IconComponent from "@/components/IconComponent.vue";
+import { GripVertical } from "lucide-vue-next";
+import DummyComponent from "@/components/DummyComponent.vue";
 
 export default {
   components: {
     ChevronDown,
-    PopoverDialog,
+    // PopoverDialog,
     IconComponent,
+  // GripVertical,
+  DummyComponent
   },
   setup() {
     const { menuItems } = useChannelsStore();
     const expandedIndex = ref(null);
     const hoveredIndex = ref(null);
+    const drag = ref(false);
+    const dragEnabled = ref(false); // Add this reactive flag for drag enable state
 
     const toggleDropdown = (index) => {
       expandedIndex.value = expandedIndex.value === index ? null : index;
@@ -27,6 +33,19 @@ export default {
     const hideLabel = () => {
       hoveredIndex.value = null;
     };
+    // Enable drag functionality
+    const enableDrag = () => {
+      dragEnabled.value = true;
+    };
+
+    // Check if move is allowed (could be extended with custom logic)
+    const checkMove = (e) => {
+      // Log the index and decide if move should happen
+      console.log("Future index: " + e.draggedContext.futureIndex);
+      return true; // Allow all moves (could add conditions)
+    };
+    console.log("menuItems", menuItems);
+
     return {
       menuItems,
       expandedIndex,
@@ -34,6 +53,11 @@ export default {
       toggleDropdown,
       showLabel,
       hideLabel,
+      dragEnabled, // Return the drag state
+      enableDrag, // Return the function to enable drag
+      // localOptions,
+      drag,
+      checkMove,
     };
   },
 };
@@ -42,15 +66,11 @@ export default {
 <template>
   <Sidebar class="sidebar">
     <SidebarMenu>
-      <SidebarMenuItem
-        v-for="(item, index) in menuItems"
-        :key="index"
-        @mouseleave="hideLabel"
-        @mouseout="showLabel"
-      >
+      <SidebarMenuItem v-for="(item, index) in menuItems" :key="index">
         <SidebarMenuButton class="sidebar-button" @click="toggleDropdown(index)">
           {{ item.title }}
-          <PopoverDialog v-if="item.isEditable" :options="item.options" :index="index" />
+          <!-- <PopoverDialog v-if="item.isEditable" :options="item.options" :index="index" /> -->
+           <DummyComponent :options="item.options" :index="index"/>
           <ChevronDown
             :class="[
               'chevron-icon',
@@ -77,6 +97,9 @@ export default {
 
 <style scoped>
 .sidebar {
+  overflow: visible; /* Ensure popover isn't clipped */
+  position: relative; /* Set a stacking context */
+  z-index: 1; /* Adjust z-index if necessary */
   width: 30%;
   background-color: #f8f9fa;
   border-right: 1px solid #e0e0e0;
@@ -128,5 +151,17 @@ export default {
 
 .dropdown-item:hover {
   background-color: #e9ecef;
+}
+.buttons {
+  margin-top: 35px;
+}
+
+.ghost {
+  opacity: 0.5;
+  background: #c8ebfb;
+}
+
+.not-draggable {
+  cursor: no-drop;
 }
 </style>
