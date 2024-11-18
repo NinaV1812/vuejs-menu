@@ -5,6 +5,7 @@ export enum ChannelTypes {
   Phone = "phone",
   Email = "email",
   WhatsApp = "WhatsApp",
+  Random = "random",
 }
 
 export type ChannelOption = {

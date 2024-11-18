@@ -37,22 +37,24 @@
             />
           </Field>
         </div>
-        <!-- <div class="w-full bg-red"> -->
+
         <draggable class="dragArea list-group w-full" :list="localChannels" @change="log">
-          <div class="text-sm text-gray-700" v-for="element in localChannels" :key="element.title">
+          <div class="text-sm text-gray-700" v-for="(element, index) in localChannels" :key="element.title">
             <div class="w-full flex items-center justify-between mt-5 mb-5">
               <Button @change="log">
                 <GripVertical class="text-muted-foreground" />
               </Button>
-              <IconComponent :type="element.type" />
+
+              <IconComponent :type="element.type" class="text-muted-foreground" />
 
               {{ element.title }}
-              <Button @click="removeOptionToChannels(index)">
+              <Button @click="removeLocalChannel(index)">
                 <Trash2 class="text-muted-foreground" />
               </Button>
             </div>
           </div>
         </draggable>
+
         <Separator />
 
         <div class="w-full flex justify-end gap-3 mt-3">
@@ -74,6 +76,21 @@ import { useForm, Field } from "vee-validate";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Airplay, Anchor, Archive, ArrowDown, ArrowUp, Bell, Bookmark, Camera, Cloud, Coffee } from "lucide-vue-next";
+
+const iconMap = {
+  Airplay,
+  Anchor,
+  Archive,
+  ArrowDown,
+  ArrowUp,
+  Bell,
+  Bookmark,
+  Camera,
+  Cloud,
+  Coffee,
+  // Add more icons as needed
+};
 
 export default defineComponent({
   components: {
@@ -98,18 +115,24 @@ export default defineComponent({
       type: Array as () => ChannelOption[],
       default: () => [],
     },
-    index: {
-      type: Number,
-      required: true,
-    },
+    // index: {
+    //   type: Number,
+    //   required: true,
+    // },
   },
   setup() {
     const isInputFocused = ref(false);
 
-    const { removeOptionToChannels, addOptionToChannels, updateChannelsOptions, channelsItem } = useChannelsStore();
+    const { updateChannelsOptions, channelsItem } = useChannelsStore();
     console.log("channelsItem", channelsItem.options);
     const localChannels = ref([...(channelsItem.options || [])]);
     console.log("localChannels", localChannels);
+
+    const getRandomChannelType = (): ChannelTypes => {
+      const channelTypes = Object.values(ChannelTypes);
+      const randomIndex = Math.floor(Math.random() * channelTypes.length);
+      return channelTypes[randomIndex];
+    };
 
     watch(
       () => channelsItem.value?.options,
@@ -124,27 +147,32 @@ export default defineComponent({
         newOption: "",
       },
     });
+
     const onSubmit = handleSubmit((values) => {
       const newOption = {
         title: values.newOption,
-        type: ChannelTypes.Phone,
+        type: getRandomChannelType(), // Return a random ChannelType enum
       };
       localChannels.value = [...localChannels.value, newOption];
-
-      // addOptionToChannels(newOption);
       resetForm();
     });
+
     const applyChanges = () => {
-      updateChannelsOptions(localChannels.value); // Update store
+      updateChannelsOptions(localChannels.value);
+    };
+
+    const removeLocalChannel = (index: number) => {
+      const updatedChannels = localChannels.value.filter((_, idx) => idx !== index);
+      localChannels.value = updatedChannels; // Reassign to ensure reactivity
     };
     return {
-      removeOptionToChannels,
       onSubmit,
       isInputFocused,
       onFocus: () => (isInputFocused.value = true),
       onBlur: () => (isInputFocused.value = false),
       localChannels,
       applyChanges,
+      removeLocalChannel,
     };
   },
   data() {
