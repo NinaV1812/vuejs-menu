@@ -8,6 +8,7 @@
               <Plus class="add-button" />
             </Button>
           </TooltipTrigger>
+
           <TooltipContent bg="black">
             <span>Add channels</span>
           </TooltipContent>
@@ -16,8 +17,7 @@
     </PopoverTrigger>
 
     <PopoverContent class="popover-content ml-40">
-      <!-- <template> -->
-      <form class="" @submit="onSubmit">
+      <form class="" @submit.prevent="onSubmit">
         <div class="w-full flex items-center">
           <Field name="newOption" v-slot="{ field }">
             <Input
@@ -29,45 +29,43 @@
               @blur="isInputFocused = false"
             />
             <Plus
-            :class="{
-              'bg-blue-100': isInputFocused,
-              'text-gray-500': !isInputFocused,
-            }"
-            class="absolute right-3 cursor-pointer rounded"
-          />
+              :class="{
+                'bg-blue-100': isInputFocused,
+                'text-gray-500': !isInputFocused,
+              }"
+              class="absolute right-3 cursor-pointer rounded"
+            />
           </Field>
-       
         </div>
         <!-- <div class="w-full bg-red"> -->
-          <draggable class="dragArea list-group w-full" :list="list" @change="log">
-            <div class="text-sm text-gray-700" v-for="element in list" :key="element.title">
-              <div class="w-full flex items-center justify-between mt-5 mb-5">
-                <Button @change="log">
-                  <GripVertical class="text-muted-foreground" />
-                </Button>
-                <IconComponent :type="element.type" />
+        <draggable class="dragArea list-group w-full" :list="localChannels" @change="log">
+          <div class="text-sm text-gray-700" v-for="element in localChannels" :key="element.title">
+            <div class="w-full flex items-center justify-between mt-5 mb-5">
+              <Button @change="log">
+                <GripVertical class="text-muted-foreground" />
+              </Button>
+              <IconComponent :type="element.type" />
 
-                {{ element.title }}
-                <Button @click="removeOptionToChannels(index)">
-                  <Trash2 class="text-muted-foreground" />
-                </Button>
-              </div>
+              {{ element.title }}
+              <Button @click="removeOptionToChannels(index)">
+                <Trash2 class="text-muted-foreground" />
+              </Button>
             </div>
-          </draggable>
-          <Separator />
-
-          <div class="w-full flex justify-end gap-3 mt-3">
-            <Button variant="outline" type="button">Cancel</Button>
-            <Button type="submit">Apply</Button>
           </div>
+        </draggable>
+        <Separator />
+
+        <div class="w-full flex justify-end gap-3 mt-3">
+          <Button variant="outline" type="button">Cancel</Button>
+          <Button type="button" @click="applyChanges">Apply</Button>
+        </div>
         <!-- </div> -->
       </form>
-      <!-- </template> -->
     </PopoverContent>
   </Popover>
 </template>
 <script lang="ts">
-import { defineComponent, ref } from "vue";
+import { defineComponent, ref, watch } from "vue";
 import { VueDraggableNext } from "vue-draggable-next";
 import { Plus, Trash2, GripVertical } from "lucide-vue-next";
 import IconComponent from "@/components/IconComponent.vue";
@@ -106,45 +104,61 @@ export default defineComponent({
     },
   },
   setup() {
-    // Access the Pinia store
     const isInputFocused = ref(false);
 
-    const { removeOptionToChannels, addOptionToChannels } = useChannelsStore();
-    const { handleSubmit, resetForm, values } = useForm({
+    const { removeOptionToChannels, addOptionToChannels, updateChannelsOptions, channelsItem } = useChannelsStore();
+    console.log("channelsItem", channelsItem.options);
+    const localChannels = ref([...(channelsItem.options || [])]);
+    console.log("localChannels", localChannels);
+
+    watch(
+      () => channelsItem.value?.options,
+      (newOptions) => {
+        localChannels.value = [...(newOptions || [])];
+      },
+      { deep: true },
+    );
+
+    const { handleSubmit, resetForm } = useForm({
       initialValues: {
         newOption: "",
       },
     });
     const onSubmit = handleSubmit((values) => {
       const newOption = {
-        title: values.newOption, // Set the title to the value of newOption
-        type: ChannelTypes.Phone, // Default type is 'phone'
+        title: values.newOption,
+        type: ChannelTypes.Phone,
       };
+      localChannels.value = [...localChannels.value, newOption];
 
-      addOptionToChannels(newOption); // Pass the new option to the function
-      resetForm(); // Reset the form after submission
+      // addOptionToChannels(newOption);
+      resetForm();
     });
+    const applyChanges = () => {
+      updateChannelsOptions(localChannels.value); // Update store
+    };
     return {
-      removeOptionToChannels, // Expose the function
+      removeOptionToChannels,
       onSubmit,
       isInputFocused,
       onFocus: () => (isInputFocused.value = true),
       onBlur: () => (isInputFocused.value = false),
+      localChannels,
+      applyChanges,
     };
   },
   data() {
-    console.log("this.options]", this.options);
     return {
       enabled: true,
-      list: [...this.options],
       dragging: false,
+      list: this.localChannels,
     };
   },
   methods: {
     log(event) {
       const { updateChannelsOptions } = useChannelsStore();
+      console.log("this.list useChannelsStore", this.list);
 
-      // Update the channelsItem options with the current list after drag
       updateChannelsOptions(this.list);
 
       console.log("Drag event:", event);
@@ -160,7 +174,6 @@ export default defineComponent({
   cursor: pointer;
   border-radius: 4px;
 }
-
 .input-style {
   padding-left: 10px;
   padding-right: 10px;

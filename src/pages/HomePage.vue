@@ -4,23 +4,18 @@ import { ChevronDown } from "lucide-vue-next";
 import { useChannelsStore } from "@/stores/counter";
 import { ref } from "vue";
 import IconComponent from "@/components/IconComponent.vue";
-import { GripVertical } from "lucide-vue-next";
 import DummyComponent from "@/components/DummyComponent.vue";
 
 export default {
   components: {
     ChevronDown,
-    // PopoverDialog,
     IconComponent,
-  // GripVertical,
-  DummyComponent
+    DummyComponent,
   },
   setup() {
     const { menuItems } = useChannelsStore();
     const expandedIndex = ref(null);
     const hoveredIndex = ref(null);
-    const drag = ref(false);
-    const dragEnabled = ref(false); // Add this reactive flag for drag enable state
 
     const toggleDropdown = (index) => {
       expandedIndex.value = expandedIndex.value === index ? null : index;
@@ -33,17 +28,7 @@ export default {
     const hideLabel = () => {
       hoveredIndex.value = null;
     };
-    // Enable drag functionality
-    const enableDrag = () => {
-      dragEnabled.value = true;
-    };
 
-    // Check if move is allowed (could be extended with custom logic)
-    const checkMove = (e) => {
-      // Log the index and decide if move should happen
-      console.log("Future index: " + e.draggedContext.futureIndex);
-      return true; // Allow all moves (could add conditions)
-    };
     console.log("menuItems", menuItems);
 
     return {
@@ -53,11 +38,6 @@ export default {
       toggleDropdown,
       showLabel,
       hideLabel,
-      dragEnabled, // Return the drag state
-      enableDrag, // Return the function to enable drag
-      // localOptions,
-      drag,
-      checkMove,
     };
   },
 };
@@ -70,7 +50,7 @@ export default {
         <SidebarMenuButton class="sidebar-button" @click="toggleDropdown(index)">
           {{ item.title }}
           <!-- <PopoverDialog v-if="item.isEditable" :options="item.options" :index="index" /> -->
-           <DummyComponent :options="item.options" :index="index"/>
+          <DummyComponent v-if="item.isEditable" :options="item.options" :index="index" />
           <ChevronDown
             :class="[
               'chevron-icon',
@@ -117,11 +97,11 @@ export default {
   cursor: pointer;
 }
 
-.add-button:hover {
+/* .add-button:hover {
   color: #0056b3;
   background-color: #6c757d;
   border-radius: 4px;
-}
+} */
 
 .chevron-icon {
   margin-left: auto;
@@ -154,14 +134,5 @@ export default {
 }
 .buttons {
   margin-top: 35px;
-}
-
-.ghost {
-  opacity: 0.5;
-  background: #c8ebfb;
-}
-
-.not-draggable {
-  cursor: no-drop;
 }
 </style>
