@@ -4,50 +4,50 @@
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger>
-            <Button>
-              <Plus class="add-button" />
+            <Button class="add-button">
+              <Plus />
             </Button>
           </TooltipTrigger>
 
-          <TooltipContent bg="black">
-            <span>Add channels</span>
+          <TooltipContent class="bg-black">
+            <span class="colour-white">Add channels</span>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
     </PopoverTrigger>
 
-    <PopoverContent class="popover-content ml-40">
-      <form class="" @submit.prevent="onSubmit">
+    <PopoverContent class="ml-40">
+      <form @submit.prevent="onSubmit">
         <div class="w-full flex items-center">
           <Field name="newOption" v-slot="{ field }">
             <Input
               v-bind="field"
               type="text"
               placeholder="Type to add channel..."
-              class="input-style pl-10 pr-10 w-full focus:text-gray-500 focus:bg-blue-100"
+              class="input-style focus:text-gray-500 focus:bg-blue-100"
               @focus="isInputFocused = true"
               @blur="isInputFocused = false"
+              @keydown.enter="onSubmit"
             />
             <Plus
               :class="{
-                'bg-blue-100': isInputFocused,
                 'text-gray-500': !isInputFocused,
               }"
-              class="absolute right-3 cursor-pointer rounded"
+              class="absolute right-8 rounded"
             />
           </Field>
         </div>
 
-        <draggable class="dragArea list-group w-full" :list="localChannels" @change="log">
+        <draggable :list="localChannels">
           <div class="text-sm text-gray-700" v-for="(element, index) in localChannels" :key="element.title">
-            <div class="w-full flex items-center justify-between mt-5 mb-5">
-              <Button @change="log">
-                <GripVertical class="text-muted-foreground" />
-              </Button>
+            <div class="channel-row">
+              <GripVertical />
 
-              <IconComponent :type="element.type" class="text-muted-foreground" />
+              <div class="flex w-full gap-5">
+                <IconComponent :type="element.type" class="text-muted-foreground" />
+                {{ element.title }}
+              </div>
 
-              {{ element.title }}
               <Button @click="removeLocalChannel(index)">
                 <Trash2 class="text-muted-foreground" />
               </Button>
@@ -56,18 +56,16 @@
         </draggable>
 
         <Separator />
-
-        <div class="w-full flex justify-end gap-3 mt-3">
-          <Button variant="outline" type="button">Cancel</Button>
-          <Button type="button" @click="applyChanges">Apply</Button>
-        </div>
-        <!-- </div> -->
+        <PopoverClose class="w-full flex justify-end gap-3 mt-3">
+          <UiButton variant="outline" type="button">Cancel</UiButton>
+          <UiButton type="button" @click="applyChanges">Apply</UiButton>
+        </PopoverClose>
       </form>
     </PopoverContent>
   </Popover>
 </template>
 <script lang="ts">
-import { defineComponent, ref, watch } from "vue";
+import { defineComponent, ref } from "vue";
 import { VueDraggableNext } from "vue-draggable-next";
 import { Plus, Trash2, GripVertical } from "lucide-vue-next";
 import IconComponent from "@/components/IconComponent.vue";
@@ -76,21 +74,8 @@ import { useForm, Field } from "vee-validate";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Airplay, Anchor, Archive, ArrowDown, ArrowUp, Bell, Bookmark, Camera, Cloud, Coffee } from "lucide-vue-next";
-
-const iconMap = {
-  Airplay,
-  Anchor,
-  Archive,
-  ArrowDown,
-  ArrowUp,
-  Bell,
-  Bookmark,
-  Camera,
-  Cloud,
-  Coffee,
-  // Add more icons as needed
-};
+import { Button as UiButton } from "@/components/ui/Button";
+import { PopoverClose } from "radix-vue";
 
 export default defineComponent({
   components: {
@@ -108,25 +93,15 @@ export default defineComponent({
     TooltipTrigger,
     Separator,
     Plus,
+    PopoverClose,
+    UiButton,
   },
 
-  props: {
-    options: {
-      type: Array as () => ChannelOption[],
-      default: () => [],
-    },
-    // index: {
-    //   type: Number,
-    //   required: true,
-    // },
-  },
   setup() {
     const isInputFocused = ref(false);
 
     const { updateChannelsOptions, channelsItem } = useChannelsStore();
-    console.log("channelsItem", channelsItem.options);
     const localChannels = ref([...(channelsItem.options || [])]);
-    console.log("localChannels", localChannels);
 
     const getRandomChannelType = (): ChannelTypes => {
       const channelTypes = Object.values(ChannelTypes);
@@ -134,25 +109,22 @@ export default defineComponent({
       return channelTypes[randomIndex];
     };
 
-    watch(
-      () => channelsItem.value?.options,
-      (newOptions) => {
-        localChannels.value = [...(newOptions || [])];
-      },
-      { deep: true },
-    );
-
-    const { handleSubmit, resetForm } = useForm({
+    const { handleSubmit, resetForm, values } = useForm({
       initialValues: {
         newOption: "",
       },
     });
 
-    const onSubmit = handleSubmit((values) => {
+    const onSubmit = handleSubmit(() => {
+      if (!values.newOption.trim()) {
+        return;
+      }
+
       const newOption = {
-        title: values.newOption,
-        type: getRandomChannelType(), // Return a random ChannelType enum
+        title: values.newOption.trim(),
+        type: getRandomChannelType(),
       };
+
       localChannels.value = [...localChannels.value, newOption];
       resetForm();
     });
@@ -163,7 +135,7 @@ export default defineComponent({
 
     const removeLocalChannel = (index: number) => {
       const updatedChannels = localChannels.value.filter((_, idx) => idx !== index);
-      localChannels.value = updatedChannels; // Reassign to ensure reactivity
+      localChannels.value = updatedChannels;
     };
     return {
       onSubmit,
@@ -175,24 +147,6 @@ export default defineComponent({
       removeLocalChannel,
     };
   },
-  data() {
-    return {
-      enabled: true,
-      dragging: false,
-      list: this.localChannels,
-    };
-  },
-  methods: {
-    log(event) {
-      const { updateChannelsOptions } = useChannelsStore();
-      console.log("this.list useChannelsStore", this.list);
-
-      updateChannelsOptions(this.list);
-
-      console.log("Drag event:", event);
-      console.log("Updated channelsItem options:", this.list);
-    },
-  },
 });
 </script>
 <style scoped>
@@ -203,8 +157,7 @@ export default defineComponent({
   border-radius: 4px;
 }
 .input-style {
-  padding-left: 10px;
-  padding-right: 10px;
+  padding: 10px 5px 10px 5px;
   width: 100%;
   font-size: 14px;
   border-radius: 4px;
@@ -227,10 +180,23 @@ export default defineComponent({
   color: #6b7280;
 }
 
-.popover-content {
-  z-index: 1050;
+.colour-white {
+  color: white;
 }
-.list-group {
-  overflow: visible !important;
+.channel-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin: 5px 0;
+  padding: 7px;
+  background-color: #ffffff;
+  border-radius: 6px;
+  transition: background-color 0.3s ease;
+  gap: 5px;
+}
+
+.channel-row:hover {
+  background-color: #f9fafb;
 }
 </style>

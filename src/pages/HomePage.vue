@@ -29,8 +29,6 @@ export default {
       hoveredIndex.value = null;
     };
 
-    console.log("menuItems", menuItems);
-
     return {
       menuItems,
       expandedIndex,
@@ -50,7 +48,7 @@ export default {
         <SidebarMenuButton class="sidebar-button" @click="toggleDropdown(index)">
           {{ item.title }}
           <!-- <PopoverDialog v-if="item.isEditable" :options="item.options" :index="index" /> -->
-          <DummyComponent v-if="item.isEditable" :options="item.options" :index="index" />
+          <DummyComponent v-if="item.isEditable" />
           <ChevronDown
             :class="[
               'chevron-icon',
@@ -66,7 +64,7 @@ export default {
           :class="['collapsible', expandedIndex === index ? 'animate-collapsible-down' : 'animate-collapsible-up']"
         >
           <div v-for="(option, optIndex) in item.options" :key="optIndex" class="dropdown-item">
-            <IconComponent :type="option.type" />
+            <IconComponent :type="option.type" class="text-muted-foreground" />
             <span>{{ option.title }}</span>
           </div>
         </div>
@@ -77,9 +75,9 @@ export default {
 
 <style scoped>
 .sidebar {
-  overflow: visible; /* Ensure popover isn't clipped */
-  position: relative; /* Set a stacking context */
-  z-index: 1; /* Adjust z-index if necessary */
+  overflow: visible;
+  position: relative;
+  z-index: 1;
   width: 30%;
   background-color: #f8f9fa;
   border-right: 1px solid #e0e0e0;
@@ -96,12 +94,6 @@ export default {
   font-weight: bold;
   cursor: pointer;
 }
-
-/* .add-button:hover {
-  color: #0056b3;
-  background-color: #6c757d;
-  border-radius: 4px;
-} */
 
 .chevron-icon {
   margin-left: auto;
