@@ -1,49 +1,47 @@
 <script lang="ts">
-import { defineComponent, ref, watch } from "vue";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { defineComponent, ref } from "vue";
+import { VueDraggableNext } from "vue-draggable-next";
 import { Plus, Trash2, GripVertical } from "lucide-vue-next";
-import { Separator } from "@/components/ui/separator";
-import { useChannelsStore, ChannelTypes, type ChannelOption } from "@/stores/counter";
-import { useForm, Field } from "vee-validate";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import IconComponent from "@/components/IconComponent.vue";
-import { VueDraggableNext } from 'vue-draggable-next'
+import { useChannelsStore, ChannelTypes } from "@/stores/channels";
+import { useForm, Field } from "vee-validate";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button as UiButton } from "@/components/ui/Button";
+import { PopoverClose } from "radix-vue";
 
 export default defineComponent({
   components: {
+    draggable: VueDraggableNext,
+    GripVertical,
+    Trash2,
+    IconComponent,
+    Field,
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
     Tooltip,
     TooltipContent,
     TooltipProvider,
     TooltipTrigger,
     Separator,
     Plus,
-    Trash2,
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-    Field,
-    IconComponent,
-    // draggable,
-    GripVertical,
+    PopoverClose,
+    UiButton,
   },
-  props: {
-    options: {
-      type: Array as () => ChannelOption[],
-      default: () => [],
-    },
-    index: {
-      type: Number,
-      required: true,
-    },
-  },
-  setup(props) {
-    const isInputFocused = ref(false);
-    const popoverVisible = ref(false);
-    const dragEnabled = ref(false); // Add this reactive flag for drag enable state
-    const drag = ref(false);
-    const localOptions = ref<ChannelOption[]>([...props.options]);
 
-    const { addOptionToChannels, removeOptionToChannels } = useChannelsStore();
+  setup() {
+    const isInputFocused = ref(false);
+
+    const { updateChannelsOptions, channelsItem } = useChannelsStore();
+    const localChannels = ref([...(channelsItem.options || [])]);
+
+    const getRandomChannelType = (): ChannelTypes => {
+      const channelTypes = Object.values(ChannelTypes);
+      const randomIndex = Math.floor(Math.random() * channelTypes.length);
+      return channelTypes[randomIndex];
+    };
 
     const { handleSubmit, resetForm, values } = useForm({
       initialValues: {
@@ -51,53 +49,36 @@ export default defineComponent({
       },
     });
 
-    const onSubmit = handleSubmit((values) => {
+    const onSubmit = handleSubmit(() => {
+      if (!values.newOption.trim()) {
+        return;
+      }
+
       const newOption = {
-        title: values.newOption, // Set the title to the value of newOption
-        type: ChannelTypes.Phone, // Default type is 'phone'
+        title: values.newOption.trim(),
+        type: getRandomChannelType(),
       };
 
-      addOptionToChannels(newOption); // Pass the new option to the function
-      resetForm(); // Reset the form after submission
-      popoverVisible.value = false; // Close the popover
+      localChannels.value = [...localChannels.value, newOption];
+      resetForm();
     });
 
-    const onCancel = () => {
-      resetForm(); // Clear the input field
-      popoverVisible.value = false; // Hide the popover
+    const applyChanges = () => {
+      updateChannelsOptions(localChannels.value);
     };
 
-    // Watch for changes to the localOptions and emit changes back to the parent
-    watch(localOptions, (newOptions) => {
-      console.log("Updated options:", newOptions);
-    });
-
-    // Enable drag functionality
-    const enableDrag = () => {
-      dragEnabled.value = true;
+    const removeLocalChannel = (index: number) => {
+      const updatedChannels = localChannels.value.filter((_, idx) => idx !== index);
+      localChannels.value = updatedChannels;
     };
-
-    // Check if move is allowed (could be extended with custom logic)
-    const checkMove = (e) => {
-      // Log the index and decide if move should happen
-      console.log("Future index: " + e.draggedContext.futureIndex);
-      return true; // Allow all moves (could add conditions)
-    };
-
     return {
+      onSubmit,
       isInputFocused,
       onFocus: () => (isInputFocused.value = true),
       onBlur: () => (isInputFocused.value = false),
-      popoverVisible,
-      onSubmit,
-      onCancel,
-      values,
-      removeOptionToChannels,
-      dragEnabled, // Return the drag state
-      enableDrag, // Return the function to enable drag
-      localOptions,
-      drag,
-      checkMove,
+      localChannels,
+      applyChanges,
+      removeLocalChannel,
     };
   },
 });
@@ -108,59 +89,63 @@ export default defineComponent({
     <PopoverTrigger>
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger >
-            <Button >
-              <Plus class="add-button" />
+          <TooltipTrigger>
+            <Button class="add-button">
+              <Plus />
             </Button>
           </TooltipTrigger>
-          <TooltipContent bg="black">
-            <span>Add channels</span>
+
+          <TooltipContent class="bg-black">
+            <span class="colour-white">Add channels</span>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
     </PopoverTrigger>
 
-    <PopoverContent class="popover-content ml-40">
-      <form class="w-2/3 space-y-6" @submit.prevent="onSubmit">
-        <div class="w-full flex items-center relative">
+    <PopoverContent class="ml-40">
+      <form @submit.prevent="onSubmit">
+        <div class="w-full flex items-center">
           <Field name="newOption" v-slot="{ field }">
             <Input
               v-bind="field"
               type="text"
               placeholder="Type to add channel..."
-              class="input-style pl-10 pr-10 w-full focus:text-gray-500 focus:bg-blue-100"
+              class="input-style focus:text-gray-500 focus:bg-blue-100"
               @focus="isInputFocused = true"
               @blur="isInputFocused = false"
+              @keydown.enter="onSubmit"
+            />
+            <Plus
+              :class="{
+                'text-gray-500': !isInputFocused,
+              }"
+              class="absolute right-8 rounded"
             />
           </Field>
-          <Plus
-            :class="{
-              'bg-blue-100': isInputFocused,
-              'text-gray-500': !isInputFocused,
-            }"
-            class="absolute right-3 cursor-pointer rounded"
-          />
         </div>
 
-        <div v-for="(option, index) in options" :key="index" class="text-sm text-gray-700">
-          <div class="w-full flex items-center justify-between mt-3 mb-3">
-            <Button @click="removeOptionToChannels(index)">
-              <GripVertical class="text-muted-foreground" />
-            </Button>
-            <IconComponent :type="option.type" />
-            <Label for="email" class="flex-1 ml-3 mr-3">{{ option.title }}</Label>
-            <Button @click="removeOptionToChannels(index)">
-              <Trash2 class="text-muted-foreground" />
-            </Button>
+        <draggable :list="localChannels">
+          <div class="text-sm text-gray-700" v-for="(element, index) in localChannels" :key="element.title">
+            <div class="channel-row">
+              <GripVertical />
+
+              <div class="flex w-full gap-5">
+                <IconComponent :type="element.type" class="text-muted-foreground" />
+                {{ element.title }}
+              </div>
+
+              <Button @click="removeLocalChannel(index)">
+                <Trash2 class="text-muted-foreground" />
+              </Button>
+            </div>
           </div>
-        </div>
+        </draggable>
 
         <Separator />
-
-        <div class="w-full flex justify-end gap-3 mt-3">
-          <Button variant="outline" type="button" @click="onCancel">Cancel</Button>
-          <Button type="submit">Apply</Button>
-        </div>
+        <PopoverClose class="w-full flex justify-end gap-3 mt-3">
+          <UiButton variant="outline" type="button">Cancel</UiButton>
+          <UiButton @click="applyChanges">Apply</UiButton>
+        </PopoverClose>
       </form>
     </PopoverContent>
   </Popover>
@@ -173,10 +158,8 @@ export default defineComponent({
   cursor: pointer;
   border-radius: 4px;
 }
-
 .input-style {
-  padding-left: 10px;
-  padding-right: 10px;
+  padding: 10px 5px 10px 5px;
   width: 100%;
   font-size: 14px;
   border-radius: 4px;
@@ -199,10 +182,23 @@ export default defineComponent({
   color: #6b7280;
 }
 
-.popover-content {
-  z-index: 1050;
+.colour-white {
+  color: white;
 }
-.list-group {
-  overflow: visible !important;
+.channel-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin: 5px 0;
+  padding: 7px;
+  background-color: #ffffff;
+  border-radius: 6px;
+  transition: background-color 0.3s ease;
+  gap: 5px;
+}
+
+.channel-row:hover {
+  background-color: #f9fafb;
 }
 </style>

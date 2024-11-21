@@ -33,23 +33,11 @@ export const useChannelsStore = defineStore("channels", () => {
   const menuItems = reactive(sideMenuItems);
   const channelsItem = computed(() => menuItems.find((item) => item.title === "Channels"));
 
-  const addOptionToChannels = (newOption: ChannelOption) => {
-    if (channelsItem.value?.options) {
-      channelsItem.value.options = [...channelsItem.value.options, newOption];
-    }
-  };
-
-  const removeOptionToChannels = (index: number) => {
-    if (channelsItem.value?.options) {
-      channelsItem.value.options = channelsItem.value.options.filter((_, i) => i !== index);
-    }
-  };
-
   const updateChannelsOptions = (updatedList: ChannelOption[]) => {
     if (channelsItem.value) {
       channelsItem.value.options = [...updatedList];
     }
   };
 
-  return { menuItems, addOptionToChannels, removeOptionToChannels, channelsItem, updateChannelsOptions };
+  return { menuItems, channelsItem, updateChannelsOptions };
 });

@@ -1,14 +1,7 @@
-<template>
-  <div class="channel-icon">
-    <component :is="iconComponent" class="icon" v-if="iconComponent" />
-  </div>
-</template>
-
-
 <script setup lang="ts">
 import { defineProps, computed } from "vue";
 import { Phone, Mail, MessageCircle } from "lucide-vue-next";
-import { ChannelTypes } from "@/stores/counter"; // Adjust the path accordingly
+import { ChannelTypes } from "@/stores/channels"; // Adjust the path accordingly
 
 const props = defineProps<{ type: ChannelTypes }>();
 
@@ -18,9 +11,14 @@ const iconMap = {
   [ChannelTypes.WhatsApp]: MessageCircle,
 };
 
-const iconComponent = computed(() => iconMap[props.type]);
+const IconComponent = computed(() => iconMap[props.type]);
 </script>
 
+<template>
+  <div class="channel-icon">
+    <component :is="IconComponent" class="icon" v-if="IconComponent" />
+  </div>
+</template>
 
 <style scoped>
 .icon {

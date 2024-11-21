@@ -1,16 +1,17 @@
 <script>
 import { ChevronDown } from "lucide-vue-next";
-// import PopoverDialog from "@/components/PopoverDialog.vue";
-import { useChannelsStore } from "@/stores/counter";
+import PopoverDialog from "@/components/PopoverDialog.vue";
+import { useChannelsStore } from "@/stores/channels";
 import { ref } from "vue";
 import IconComponent from "@/components/IconComponent.vue";
-import DummyComponent from "@/components/DummyComponent.vue";
+import CreateConversation from "@/components/CreateConversation.vue";
 
 export default {
   components: {
     ChevronDown,
     IconComponent,
-    DummyComponent,
+    CreateConversation,
+    PopoverDialog,
   },
   setup() {
     const { menuItems } = useChannelsStore();
@@ -43,41 +44,36 @@ export default {
 
 <template>
   <Sidebar class="sidebar">
-    <SidebarMenu>
-      <SidebarMenuItem v-for="(item, index) in menuItems" :key="index">
-        <SidebarMenuButton class="sidebar-button" @click="toggleDropdown(index)">
-          {{ item.title }}
-          <!-- <PopoverDialog v-if="item.isEditable" :options="item.options" :index="index" /> -->
-          <DummyComponent v-if="item.isEditable" />
-          <ChevronDown
-            :class="[
-              'chevron-icon',
-              {
-                'rotate-180': expandedIndex === index && !!item.options.length,
-                'chevron-disabled': !item.options.length,
-              },
-            ]"
-          />
-        </SidebarMenuButton>
-        <div
-          v-show="expandedIndex === index"
-          :class="['collapsible', expandedIndex === index ? 'animate-collapsible-down' : 'animate-collapsible-up']"
-        >
-          <div v-for="(option, optIndex) in item.options" :key="optIndex" class="dropdown-item">
-            <IconComponent :type="option.type" class="text-muted-foreground" />
-            <span>{{ option.title }}</span>
-          </div>
+    <div v-for="(item, index) in menuItems" :key="index">
+      <SidebarMenuButton class="sidebar-button" @click="toggleDropdown(index)">
+        {{ item.title }}
+        <PopoverDialog v-if="item.isEditable" />
+        <ChevronDown
+          :class="[
+            'chevron-icon',
+            {
+              'rotate-180': expandedIndex === index && !!item.options.length,
+              'chevron-disabled': !item.options.length,
+            },
+          ]"
+        />
+      </SidebarMenuButton>
+      <div
+        v-show="expandedIndex === index"
+        :class="['collapsible', expandedIndex === index ? 'animate-collapsible-down' : 'animate-collapsible-up']"
+      >
+        <div v-for="(option, optIndex) in item.options" :key="optIndex" class="dropdown-item">
+          <IconComponent :type="option.type" class="text-muted-foreground" />
+          <span>{{ option.title }}</span>
         </div>
-      </SidebarMenuItem>
-    </SidebarMenu>
+      </div>
+    </div>
+    <CreateConversation />
   </Sidebar>
 </template>
 
-<style scoped>
+<style>
 .sidebar {
-  overflow: visible;
-  position: relative;
-  z-index: 1;
   width: 30%;
   background-color: #f8f9fa;
   border-right: 1px solid #e0e0e0;
@@ -123,8 +119,5 @@ export default {
 
 .dropdown-item:hover {
   background-color: #e9ecef;
-}
-.buttons {
-  margin-top: 35px;
 }
 </style>
