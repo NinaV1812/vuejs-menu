@@ -13,31 +13,51 @@ export type ChannelOption = {
   type: ChannelTypes;
 };
 
-const dummyChannelsOptions: ChannelOption[] = [
-  { title: "Project Alpha", type: ChannelTypes.Email },
-  { title: "Project Beta", type: ChannelTypes.Phone },
-  { title: "Project Gamma", type: ChannelTypes.WhatsApp },
-];
 
-export const sideMenuItems = [
-  { title: "Inbox", options: [] },
-  { title: "Personal", options: [] },
-  { title: "Teams", options: [] },
-  { title: "Channels", options: dummyChannelsOptions, isEditable: true },
-  { title: "Views", options: [] },
-  { title: "Labels", options: [] },
-  { title: "Users", options: [] },
+export type AccordionItem = {
+  value: string;
+  title: string;
+  content: string | ChannelOption[]; 
+};
+
+
+const accordionItems: AccordionItem[] = [
+  { value: "item-1", title: "Views", content: [] },
+  {
+    value: "item-2",
+    title: "Inbox",
+    content: [],
+  },
+  {
+    value: "item-3",
+    title: "Personal",
+    content: [],
+  },
+  {
+    value: "item-4",
+    title: "Teams",
+    content: [],
+  },
+  {
+    value: "item-5",
+    title: "Channels",
+    content: [],
+  },
+  { value: "item-6", title: "Labels", content: [] },
+  { value: "item-7", title: "Users", content: [] },
+
 ];
 
 export const useChannelsStore = defineStore("channels", () => {
-  const menuItems = reactive(sideMenuItems);
+  const menuItems = reactive(accordionItems);
   const channelsItem = computed(() => menuItems.find((item) => item.title === "Channels"));
 
   const updateChannelsOptions = (updatedList: ChannelOption[]) => {
-    if (channelsItem.value) {
-      channelsItem.value.options = [...updatedList];
+    if (channelsItem.value && Array.isArray(channelsItem.value.content)) {
+      channelsItem.value.content = [...updatedList];
+    } else {
+      console.warn("Channels item not found or content is not an array.");
     }
   };
-
   return { menuItems, channelsItem, updateChannelsOptions };
 });

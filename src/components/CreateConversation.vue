@@ -1,11 +1,11 @@
 <script lang="ts">
 import { defineComponent } from "vue";
-import { Button } from "@/components/ui/button";
+import { Button as UiButton } from "@/components/ui/Button";
 import { FilePenLine } from "lucide-vue-next";
 
 export default defineComponent({
   components: {
-    Button,
+    UiButton,
     FilePenLine,
   },
 });
@@ -13,10 +13,10 @@ export default defineComponent({
 
 <template>
   <div class="container">
-    <Button variant="outline" type="button">
+    <UiButton variant="outline" type="button">
       <FilePenLine />
       <span class="bold">Create Conversation</span>
-    </Button>
+    </UiButton>
   </div>
 </template>
 
@@ -26,9 +26,6 @@ export default defineComponent({
   flex: 1;
   justify-content: center;
   align-items: flex-end;
-  font-weight: 700;
-}
-.bold {
   font-weight: 700;
 }
 </style>

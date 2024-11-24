@@ -2,7 +2,6 @@
 import { defineComponent, ref } from "vue";
 import { VueDraggableNext } from "vue-draggable-next";
 import { Plus, Trash2, GripVertical } from "lucide-vue-next";
-import IconComponent from "@/components/IconComponent.vue";
 import { useChannelsStore, ChannelTypes } from "@/stores/channels";
 import { useForm, Field } from "vee-validate";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -10,13 +9,14 @@ import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button as UiButton } from "@/components/ui/Button";
 import { PopoverClose } from "radix-vue";
+import IconLabel from "@/components/IconLabel.vue";
 
 export default defineComponent({
   components: {
     draggable: VueDraggableNext,
     GripVertical,
     Trash2,
-    IconComponent,
+    IconLabel,
     Field,
     Popover,
     PopoverContent,
@@ -35,7 +35,7 @@ export default defineComponent({
     const isInputFocused = ref(false);
 
     const { updateChannelsOptions, channelsItem } = useChannelsStore();
-    const localChannels = ref([...(channelsItem.options || [])]);
+    const localChannels = ref([...(channelsItem.content)]);
 
     const getRandomChannelType = (): ChannelTypes => {
       const channelTypes = Object.values(ChannelTypes);
@@ -91,7 +91,7 @@ export default defineComponent({
         <Tooltip>
           <TooltipTrigger>
             <Button class="add-button">
-              <Plus />
+              <Plus class="h-4 w-4 mr-5" />
             </Button>
           </TooltipTrigger>
 
@@ -130,8 +130,8 @@ export default defineComponent({
               <GripVertical />
 
               <div class="flex w-full gap-5">
-                <IconComponent :type="element.type" class="text-muted-foreground" />
-                {{ element.title }}
+                <IconLabel :type="element?.type" :title="element?.title" />
+       
               </div>
 
               <Button @click="removeLocalChannel(index)">
@@ -153,10 +153,7 @@ export default defineComponent({
 
 <style scoped>
 .add-button {
-  padding: 3px;
-  color: #6c757d;
   cursor: pointer;
-  border-radius: 4px;
 }
 .input-style {
   padding: 10px 5px 10px 5px;
